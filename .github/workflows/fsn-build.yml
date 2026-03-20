@@ -22,22 +22,27 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            features: ""
             binaries: "mistralrs-server"
             archive: mistral-linux-x86_64.tar.gz
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
+            features: ""
             binaries: "mistralrs-server"
             archive: mistral-linux-aarch64.tar.gz
           - os: macos-13
             target: x86_64-apple-darwin
+            features: "accelerate"
             binaries: "mistralrs-server"
             archive: mistral-macos-x86_64.tar.gz
           - os: macos-latest
             target: aarch64-apple-darwin
+            features: "metal"
             binaries: "mistralrs-server"
             archive: mistral-macos-aarch64.tar.gz
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            features: ""
             binaries: "mistralrs-server.exe"
             archive: mistral-windows-x86_64.zip
 
@@ -63,12 +68,17 @@ jobs:
             build-essential clang libclang-dev cmake \
             libssl-dev pkg-config libgomp1
 
-      - name: Build (CPU only)
+      - name: Build (CPU only, platform-specific features)
         run: |
+          FEAT_FLAG=""
+          if [ -n "${{ matrix.features }}" ]; then
+            FEAT_FLAG="--features ${{ matrix.features }}"
+          fi
           cargo build --release --target ${{ matrix.target }} \
             -p mistralrs-server \
             --no-default-features \
-            --features "metal"
+            $FEAT_FLAG
+        shell: bash
         env:
           MISTRALRS_NO_CUDA: "1"
 
