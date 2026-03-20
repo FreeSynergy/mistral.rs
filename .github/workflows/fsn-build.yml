@@ -23,23 +23,27 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             features: ""
-            binaries: "mistralrs-server"
+            binaries: "mistralrs"
             archive: mistral-linux-x86_64.tar.gz
+            rustflags: "-C target-cpu=x86-64-v3"
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             features: ""
-            binaries: "mistralrs-server"
+            binaries: "mistralrs"
             archive: mistral-linux-aarch64.tar.gz
+            rustflags: ""
           - os: macos-latest
             target: aarch64-apple-darwin
             features: "metal"
-            binaries: "mistralrs-server"
+            binaries: "mistralrs"
             archive: mistral-macos-aarch64.tar.gz
+            rustflags: ""
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             features: ""
-            binaries: "mistralrs-server.exe"
+            binaries: "mistralrs.exe"
             archive: mistral-windows-x86_64.zip
+            rustflags: "-C target-cpu=x86-64-v3"
 
     steps:
       - name: Checkout
@@ -70,12 +74,13 @@ jobs:
             FEAT_FLAG="--features ${{ matrix.features }}"
           fi
           cargo build --release --target ${{ matrix.target }} \
-            -p mistralrs-server \
+            -p mistralrs-cli \
             --no-default-features \
             $FEAT_FLAG
         shell: bash
         env:
           MISTRALRS_NO_CUDA: "1"
+          RUSTFLAGS: ${{ matrix.rustflags }}
 
       - name: Package (Unix)
         if: runner.os != 'Windows'
@@ -85,8 +90,7 @@ jobs:
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
-          Copy-Item "target\${{ matrix.target }}\release\${{ matrix.binaries }}" .
-          Compress-Archive -Path ${{ matrix.binaries }} -DestinationPath ${{ matrix.archive }}
+          Compress-Archive -Path "target\${{ matrix.target }}\release\${{ matrix.binaries }}" -DestinationPath ${{ matrix.archive }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
